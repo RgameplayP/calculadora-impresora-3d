@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f4f6fb" id="metaThemeColor">
+<title>Calculadora 3D</title>
+<style>
+  :root {
+    color-scheme: light;
+    --fondo: #f4f6fb;
+    --tarjeta: rgba(255,255,255,.88);
+    --texto: #172033;
+    --suave: #69758b;
+    --borde: rgba(148,163,184,.28);
+    --azul: #5b5ce2;
+    --azul-hover: #4849c8;
+    --azul-oscuro: #22264f;
+    --verde: #b8f7dc;
+    --campo: #ffffff;
+    --campo-borde: #dce2ed;
+    --secundario: #edf0f8;
+    --sombra: 0 18px 55px rgba(31,41,80,.08);
+    --halo: rgba(91,92,226,.13);
+  }
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --fondo: #0b1020;
+    --tarjeta: rgba(20,27,47,.9);
+    --texto: #eef2ff;
+    --suave: #9aa7c2;
+    --borde: rgba(148,163,184,.17);
+    --azul: #818cf8;
+    --azul-hover: #a5b4fc;
+    --azul-oscuro: #151b35;
+    --verde: #a7f3d0;
+    --campo: #10172b;
+    --campo-borde: #303a56;
+    --secundario: #252d46;
+    --sombra: 0 20px 65px rgba(0,0,0,.24);
+    --halo: rgba(129,140,248,.16);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 18px;
+    min-height: 100vh;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(ellipse at 8% 0%, var(--halo), transparent 38%),
+      radial-gradient(ellipse at 100% 20%, rgba(16,185,129,.08), transparent 30%),
+      var(--fondo);
+    color: var(--texto);
+    transition: background-color .25s ease, color .25s ease;
+  }
+  .app { width: min(100%, 1040px); margin: 0 auto; }
+  header { margin: 4px 0 22px; display:flex; justify-content:space-between; align-items:center; gap:16px; }
+  .brand { display:flex; align-items:center; gap:13px; min-width:0; }
+  .brand-icon { width:46px; height:46px; display:grid; place-items:center; flex:0 0 auto; border-radius:15px; background:linear-gradient(135deg,var(--azul),#8b5cf6); color:white; font-size:23px; box-shadow:0 8px 22px var(--halo); }
+  header h1 { margin: 0 0 5px; font-size: clamp(23px, 4vw, 31px); letter-spacing: -0.045em; }
+  header p { margin: 0; color: var(--suave); font-size: 13px; line-height: 1.5; }
+  .theme-toggle { display:flex; align-items:center; justify-content:center; gap:8px; min-height:42px; padding:9px 13px; border:1px solid var(--borde); border-radius:999px; background:var(--tarjeta); color:var(--texto); white-space:nowrap; box-shadow:var(--sombra); }
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(300px, .9fr);
+    align-items: start; gap: 16px;
+  }
+  .panel {
+    background: var(--tarjeta); border: 1px solid var(--borde);
+    border-radius: 22px; padding: 23px; min-width: 0;
+    box-shadow: var(--sombra); backdrop-filter: blur(18px);
+  }
+  .panel h2 { margin: 0 0 16px; font-size: 16px; letter-spacing: -.01em; }
+  .section-label {
+    margin: 20px 0 10px; color: var(--suave); font-size: 11px;
+    text-transform: uppercase; letter-spacing: .09em; font-weight: 750;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+  .field { margin-bottom: 13px; min-width: 0; }
+  label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 650; }
+  input, select {
+    display: block; width: 100%; min-width: 0; height: 43px;
+    padding: 10px 11px; border: 1px solid var(--campo-borde); border-radius: 11px;
+    background: var(--campo); color: var(--texto); font: inherit; font-size: 14px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 4px var(--halo); }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+  .help { color: var(--suave); font-size: 11px; line-height: 1.45; margin: 6px 0 0; }
+  .result { background: linear-gradient(145deg,var(--azul-oscuro),#30396b); color: white; border:1px solid rgba(255,255,255,.12); border-radius: 22px; padding: 24px; position: sticky; top: 14px; box-shadow: 0 20px 55px rgba(31,41,80,.18); }
+  .result-kicker { color: #cbd5e1; font-size: 12px; font-weight: 650; }
+  .result-price { color: var(--verde); font-size: clamp(32px, 5vw, 43px); line-height: 1.15; letter-spacing: -.04em; font-weight: 800; margin: 7px 0 19px; overflow-wrap: anywhere; }
+  .line { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 11px 0; border-top: 1px solid #ffffff20; font-size: 13px; }
+  .line span:first-child { color: #dbe4f2; }
+  .line strong { text-align: right; white-space: nowrap; }
+  .line.total { margin-top: 4px; font-size: 14px; }
+  .line.total strong { color: var(--verde); }
+  .actions { display: grid; grid-template-columns: 1fr auto; gap: 9px; margin-top: 18px; }
+  button { min-height: 44px; padding: 11px 14px; border: 0; border-radius: 10px; cursor: pointer; font: inherit; font-size: 13px; font-weight: 750; }
+  .primary { background: var(--azul); color: white; box-shadow: 0 7px 18px var(--halo); }
+  .primary:hover { background: var(--azul-hover); }
+  .secondary { background: var(--secundario); color: var(--texto); border:1px solid var(--borde); }
+  button { transition: transform .15s ease, background-color .15s ease; }
+  button:active { transform: scale(.98); }
+  .error { display: none; margin-top: 12px; padding: 10px 12px; border-radius: 9px; background: #fee2e2; color: #991b1b; font-size: 13px; line-height: 1.4; }
+  footer { text-align: center; color: var(--suave); font-size: 11px; padding: 18px 0 3px; }
+  @media (max-width: 760px) {
+    body { padding: 16px 12px; }
+    header { align-items:flex-start; }
+    .theme-toggle { padding:9px 11px; font-size:12px; }
+    .brand-icon { width:42px; height:42px; border-radius:13px; }
+    .layout { grid-template-columns: minmax(0, 1fr); }
+    .result { position: static; grid-row: 1; padding: 19px; }
+    .panel { padding: 17px; }
+    header { margin-top: 5px; }
+  }
+  @media (max-width: 420px) {
+    header { gap:8px; }
+    .theme-toggle { width:42px; height:42px; padding:0; flex:0 0 auto; font-size:18px; }
+    #textoTema { display:none; }
+    .brand { gap:9px; }
+    .brand-icon { width:38px; height:38px; font-size:20px; }
+  }
+  @media (max-width: 380px) {
+    body { padding: 8px; }
+    .panel, .result { padding: 14px; border-radius: 13px; }
+    .grid2 { gap: 8px; }
+    .actions { grid-template-columns: 1fr; }
+    .line { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">▧</div>
+      <div>
+        <h1>Calculadora 3D</h1>
+        
+      </div>
+    </div>
+    <button class="theme-toggle" id="tema" type="button" aria-label="Cambiar tema"><span id="iconoTema">☾</span><span id="textoTema">Modo oscuro</span></button>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-labelledby="datosTitulo">
+      <h2 id="datosTitulo">Datos de la impresión</h2>
+
+      <div class="section-label">Material</div>
+      <div class="field">
+        <label for="filamento">Filamento predefinido (opcional)</label>
+        <select id="filamento">
+          <option value="PLA">PLA genérico</option>
+          <option value="PETG">PETG genérico</option>
+          <option value="ABS">ABS genérico</option>
+          <option value="otro">Otro / personalizado</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="precioRollo">Precio del rollo (Bs)</label>
+          <input id="precioRollo" type="number" min="0" step="0.01" value="120" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="pesoRollo">Peso del rollo (g)</label>
+          <input id="pesoRollo" type="number" min="1" step="1" value="1000" inputmode="decimal">
+        </div>
+      </div>
+      <div class="field">
+        <label for="consumo">Material usado (gramos)</label>
+        <input id="consumo" type="number" min="0" step="0.01" value="85" inputmode="decimal">
+      </div>
+
+      <div class="section-label">Impresión y electricidad</div>
+      <div class="grid2">
+        <div class="field">
+          <label for="watts">Consumo estimado (W)</label>
+          <input id="watts" type="number" min="0" step="1" value="250" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="tarifa">Tarifa eléctrica (Bs/kWh)</label>
+          <input id="tarifa" type="number" min="0" step="0.01" value="0.90" inputmode="decimal">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="horas">Horas</label>
+          <input id="horas" type="number" min="0" step="1" value="4" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label for="minutos">Minutos</label>
+          <input id="minutos" type="number" min="0" max="59" step="1" value="30" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="section-label">Otros costos</div>
+      <div class="grid2">
+        <div class="field">
+          <label for="desperdicio">Desperdicio (%)</label>
+          <input id="desperdicio" type="number" min="0" max="100" step="0.5" value="3" inputmode="decimal">
+        </div>
+        <div class="field">
+          <label for="extras">Acabados y otros gastos (Bs)</label>
+          <input id="extras" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="ganancia">Ganancia (%)</label>
+        <input id="ganancia" type="number" min="0" max="500" step="1" value="30" inputmode="decimal">
+      </div>
+
+      <div class="actions">
+        <button class="secondary" id="limpiar" type="button">Restablecer</button>
+      </div>
+      <div class="error" id="error" role="alert"></div>
+    </section>
+
+    <aside class="result" aria-live="polite" aria-label="Resultado del cálculo">
+      <div class="result-kicker">PRECIO DE VENTA</div>
+      <div class="result-price" id="precioFinal">Bs 0,00</div>
+      <div class="line"><span>Material</span><strong id="costoMaterial">Bs 0,00</strong></div>
+      <div class="line"><span>Electricidad</span><strong id="costoEnergia">Bs 0,00</strong></div>
+      <div class="line"><span>Acabados y otros gastos</span><strong id="costoExtras">Bs 0,00</strong></div>
+      <div class="line total"><span>Costo total</span><strong id="costoTotal">Bs 0,00</strong></div>
+      <div class="line"><span>Ganancia</span><strong id="gananciaBs">Bs 0,00</strong></div>
+    </aside>
+  </div>
+  <footer>Calculadora de impresión 3D</footer>
+</main>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+function dinero(valor) {
+  return "Bs " + valor.toLocaleString("es-BO", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function mostrarError(mensaje) {
+  $("error").textContent = mensaje;
+  $("error").style.display = "block";
+}
+
+function ocultarError() {
+  $("error").textContent = "";
+  $("error").style.display = "none";
+}
+
+function calcular() {
+  ocultarError();
+
+  const precioRollo = Number($("precioRollo").value);
+  const pesoRollo = Number($("pesoRollo").value);
+  const gramos = Number($("consumo").value);
+  const watts = Number($("watts").value);
+  const tarifa = Number($("tarifa").value);
+  const horas = Number($("horas").value);
+  const minutos = Number($("minutos").value);
+  const desperdicio = Number($("desperdicio").value);
+  const extras = Number($("extras").value);
+  const ganancia = Number($("ganancia").value);
+
+  const ids = ["precioRollo", "pesoRollo", "consumo", "watts", "tarifa", "horas", "minutos", "desperdicio", "extras", "ganancia"];
+  const valores = [precioRollo, pesoRollo, gramos, watts, tarifa, horas, minutos, desperdicio, extras, ganancia];
+
+  if (ids.some(id => $(id).value.trim() === "") || valores.some(v => !Number.isFinite(v) || v < 0)) {
+    mostrarError("Completa los campos con números válidos iguales o mayores que cero.");
+    return;
+  }
+  if (pesoRollo <= 0) {
+    mostrarError("El peso del rollo debe ser mayor que cero.");
+    return;
+  }
+  if (!Number.isInteger(horas) || !Number.isInteger(minutos) || minutos > 59) {
+    mostrarError("Las horas deben ser enteras y los minutos deben estar entre 0 y 59.");
+    return;
+  }
+  if (desperdicio > 100 || ganancia > 500) {
+    mostrarError("Revisa los porcentajes: desperdicio entre 0 y 100 y ganancia entre 0 y 500.");
+    return;
+  }
+
+  const tiempoHoras = horas + minutos / 60;
+  const costoMaterial = (precioRollo / pesoRollo) * gramos * (1 + desperdicio / 100);
+  const costoEnergia = (watts / 1000) * tiempoHoras * tarifa;
+  const costoTotal = costoMaterial + costoEnergia + extras;
+  const gananciaBs = costoTotal * (ganancia / 100);
+  const precioFinal = costoTotal + gananciaBs;
+
+  $("costoMaterial").textContent = dinero(costoMaterial);
+  $("costoEnergia").textContent = dinero(costoEnergia);
+  $("costoExtras").textContent = dinero(extras);
+  $("costoTotal").textContent = dinero(costoTotal);
+  $("gananciaBs").textContent = dinero(gananciaBs);
+  $("precioFinal").textContent = dinero(precioFinal);
+}
+
+const presets = {
+  PLA: { precio: 120, peso: 1000 },
+  PETG: { precio: 150, peso: 1000 },
+  ABS: { precio: 140, peso: 1000 },
+  otro: { precio: 0, peso: 1000 }
+};
+
+$("filamento").addEventListener("change", () => {
+  const seleccionado = presets[$("filamento").value];
+  $("precioRollo").value = seleccionado.precio;
+  $("pesoRollo").value = seleccionado.peso;
+  calcular();
+});
+
+// Alternar entre tema claro y oscuro sin depender de librerías externas.
+$("tema").addEventListener("click", () => {
+  const oscuro = document.documentElement.dataset.theme !== "dark";
+  document.documentElement.dataset.theme = oscuro ? "dark" : "light";
+  $("iconoTema").textContent = oscuro ? "☀" : "☾";
+  $("textoTema").textContent = oscuro ? "Modo claro" : "Modo oscuro";
+  $("tema").setAttribute("aria-label", oscuro ? "Cambiar a tema claro" : "Cambiar a tema oscuro");
+  $("metaThemeColor").setAttribute("content", oscuro ? "#0b1020" : "#f4f6fb");
+});
+
+["precioRollo", "pesoRollo", "consumo", "watts", "tarifa", "horas", "minutos", "desperdicio", "extras", "ganancia"]
+  .forEach(id => $(id).addEventListener("input", calcular));
+
+$("limpiar").addEventListener("click", () => {
+  $("filamento").value = "PLA";
+  $("precioRollo").value = "120";
+  $("pesoRollo").value = "1000";
+  $("consumo").value = "85";
+  $("watts").value = "250";
+  $("tarifa").value = "0.90";
+  $("horas").value = "4";
+  $("minutos").value = "30";
+  $("desperdicio").value = "3";
+  $("extras").value = "0";
+  $("ganancia").value = "30";
+  calcular();
+});
+
+calcular();
+</script>
+</body>
+</html>
+    
